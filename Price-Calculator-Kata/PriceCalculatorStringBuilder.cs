@@ -29,7 +29,7 @@ namespace Price_Calculator_Kata
 
         public string GetTaxPercentageEntryPrompt()
         {
-            return $"Enter tax percentage";
+            return $"Enter tax percentage ";
         }
     }
 }
