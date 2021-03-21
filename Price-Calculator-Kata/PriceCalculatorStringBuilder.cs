@@ -18,7 +18,7 @@ namespace Price_Calculator_Kata
 
         public string GetDiscountPriceText(DiscountPrice discountPrice)
         {
-            return $"Tax=20%, discount={discountPrice.DiscountPercentage}%, {Environment.NewLine}Tax amount = ${discountPrice.TaxAmount}, Dicount amount = ${discountPrice.DiscountAmount}, {Environment.NewLine}Price before = ${discountPrice.PriceBeforeDiscount}, price after = ${discountPrice.PriceAfterDiscount}";
+            return $"Discount amount = ${discountPrice.DiscountAmount},{Environment.NewLine}Price = ${discountPrice.PriceAfterDiscount}";
         }
 
         public string GetDiscountPriceEntryPrompt()
