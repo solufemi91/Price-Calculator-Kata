@@ -37,11 +37,18 @@ namespace Price_Calculator_Kata
 
             else if (option == "2")
             {
+                var applicableUPCForSpecialDiscount = GetApplicableUPCForSpecialDiscount();
                 var taxPercentage = GetTaxPercentage();
                 var discountPercentage = GetDiscountPercentage();
-                var priceWithDiscount = GetPriceWithDiscount(discountPercentage, taxPercentage, product);
+                var priceWithDiscount = GetPriceWithDiscount(discountPercentage, applicableUPCForSpecialDiscount, taxPercentage, product);
                 Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(priceWithDiscount));
             }
+        }
+
+        private string GetApplicableUPCForSpecialDiscount()
+        {
+            Console.WriteLine(_priceCalculatorStringBuilder.GetApplicableUPCDiscountEntryPrompt());
+            return Console.ReadLine();
         }
 
         private string GetTaxPercentage()
@@ -56,11 +63,16 @@ namespace Price_Calculator_Kata
             return Console.ReadLine();
         }
 
-        private DiscountPrice GetPriceWithDiscount(string discountLevel, string taxPercentage, Product product)
+        private DiscountPrice GetPriceWithDiscount(string discount, string applicableUPCForSpecialDiscount, string taxPercentage, Product product)
         {
             var taxAmount = Math.Round(GetPriceWithTax(product, taxPercentage) - product.Price, 2);
-            var discountPercentage = Math.Round(decimal.Parse(discountLevel), 2);
+            var discountPercentage = Math.Round(decimal.Parse(discount), 2);
             var discountAmount = Math.Round((discountPercentage / 100) * product.Price, 2);
+
+            if(product.UPC == int.Parse(applicableUPCForSpecialDiscount))
+            {
+                discountAmount += product.Price * 0.07M;
+            }
 
             return new DiscountPrice
             {
