@@ -31,5 +31,10 @@ namespace Price_Calculator_Kata
         {
             return $"Enter tax percentage ";
         }
+
+        public string GetApplicableUPCDiscountEntryPrompt()
+        {
+            return $"Enter applicable UPC for special discount";
+        }
     }
 }
