@@ -11,9 +11,9 @@ namespace Price_Calculator_Kata
         {
             return $"These are the product details: Sample product: Book with name = {product.Name}, UPC={product.UPC}, price=${product.Price}.{Environment.NewLine}Enter option: {Environment.NewLine}1. Get tax  {Environment.NewLine}2. Get discount";
         }
-        public string GetTaxText(decimal preTaxPrice, decimal postTaxPrice)
+        public string GetTaxText(decimal preTaxPrice, decimal postTaxPrice, string taxPercentage)
         {
-            return $"Product price reported as ${preTaxPrice} before tax and ${postTaxPrice} after 20% tax";
+            return $"Product price reported as ${preTaxPrice} before tax and ${postTaxPrice} after {taxPercentage}% tax";
         }
 
         public string GetDiscountPriceText(DiscountPrice discountPrice)
@@ -24,6 +24,12 @@ namespace Price_Calculator_Kata
         public string GetDiscountPriceEntryPrompt()
         {
             return $"Enter discount percentage";
+        }
+
+
+        public string GetTaxPercentageEntryPrompt()
+        {
+            return $"Enter tax percentage";
         }
     }
 }

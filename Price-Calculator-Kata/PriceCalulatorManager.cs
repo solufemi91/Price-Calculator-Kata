@@ -27,30 +27,38 @@ namespace Price_Calculator_Kata
 
         private void PrintCalculationMessage(string option, Product product)
         {
-            decimal price;
-            string message;
 
             if (option == "1")
             {
-                price = GetPriceWithTax(product);
-                message = _priceCalculatorStringBuilder.GetTaxText(product.Price, price);
-                Console.WriteLine(message);
+                var taxPercentage = GetTaxPercentage();
+                var priceWithTax = GetPriceWithTax(product, taxPercentage);
+                Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(product.Price, priceWithTax, taxPercentage));
             }
 
             else if (option == "2")
             {
-                message = _priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt();
-                Console.WriteLine(message);
-                var discountPercentage = Console.ReadLine();
-                var priceWithDiscount = GetPriceWithDiscount(discountPercentage, product);
-                message = _priceCalculatorStringBuilder.GetDiscountPriceText(priceWithDiscount);
-                Console.WriteLine(message);
+                var taxPercentage = GetTaxPercentage();
+                var discountPercentage = GetDiscountPercentage();
+                var priceWithDiscount = GetPriceWithDiscount(discountPercentage, taxPercentage, product);
+                Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(priceWithDiscount));
             }
         }
 
-        private DiscountPrice GetPriceWithDiscount(string discountLevel, Product product)
+        private string GetTaxPercentage()
         {
-            var taxAmount = Math.Round(GetPriceWithTax(product) - product.Price, 2);
+            Console.WriteLine(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
+            return  Console.ReadLine();
+        }
+
+        private string GetDiscountPercentage()
+        {
+            Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt());
+            return Console.ReadLine();
+        }
+
+        private DiscountPrice GetPriceWithDiscount(string discountLevel, string taxPercentage, Product product)
+        {
+            var taxAmount = Math.Round(GetPriceWithTax(product, taxPercentage) - product.Price, 2);
             var discountPercentage = Math.Round(decimal.Parse(discountLevel), 2);
             var discountAmount = Math.Round((discountPercentage / 100) * product.Price, 2);
 
@@ -63,11 +71,12 @@ namespace Price_Calculator_Kata
                 PriceAfterDiscount = product.Price + (taxAmount - discountAmount)
             };
         }
-      
-        private decimal GetPriceWithTax(Product product)
+
+        private decimal GetPriceWithTax(Product product, string taxPercentage)
         {
             var preTaxPrice = product.Price;
-            var priceWithtax = preTaxPrice + (preTaxPrice * 0.2M);
+            var multipier = Math.Round(decimal.Parse(taxPercentage), 2) / 100;
+            var priceWithtax = preTaxPrice + (preTaxPrice * multipier);
             return Math.Round(priceWithtax, 2);
         }
 
