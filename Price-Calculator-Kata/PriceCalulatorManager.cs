@@ -31,7 +31,7 @@ namespace Price_Calculator_Kata
             if (option == "1")
             {
                 var taxPercentage = GetTaxPercentage();
-                var priceWithTax = GetPriceWithTax(product, taxPercentage);
+                var priceWithTax = GetPriceAfterTaxApplied(product.Price, taxPercentage);
                 Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(product.Price, priceWithTax, taxPercentage));
             }
 
@@ -40,9 +40,84 @@ namespace Price_Calculator_Kata
                 var applicableUPCForSpecialDiscount = GetApplicableUPCForSpecialDiscount();
                 var taxPercentage = GetTaxPercentage();
                 var discountPercentage = GetDiscountPercentage();
-                var priceWithDiscount = GetPriceWithDiscount(discountPercentage, applicableUPCForSpecialDiscount, taxPercentage, product);
-                Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(priceWithDiscount));
+                var applyDiscountFirst = GetApplyDiscountFirstFlag();
+
+                var discountPrice = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage);
+
+                Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(discountPrice.TotalDiscountDeduction, discountPrice.TotalPriceAfterDiscount));
             }
+        }
+
+        private DiscountPrice ApplyDiscountsAndTax(string applyDiscountFirst, Product product, string applicableUPCForSpecialDiscount, string taxPercentage, string discountPercentage)
+        {
+            var upcDiscountDeduction = GetUPCDiscountDeduction(product, applicableUPCForSpecialDiscount);
+            decimal totalDiscountDeduction;
+            decimal totalPriceAfterDiscount;
+            decimal taxAddition;
+            decimal discountDeduction;
+
+            if (applyDiscountFirst == "Y")
+            {               
+                var priceAfterUPCDiscount = product.Price - upcDiscountDeduction;
+                taxAddition = GetTaxAddition(priceAfterUPCDiscount, taxPercentage);
+                discountDeduction = GetDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
+                totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
+                totalPriceAfterDiscount = priceAfterUPCDiscount + taxAddition - discountDeduction;
+            }
+            else
+            {
+                taxAddition = GetTaxAddition(product.Price, taxPercentage);
+                discountDeduction = GetDiscountDeduction(discountPercentage, product.Price);               
+                totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
+                totalPriceAfterDiscount = product.Price + taxAddition - discountDeduction - upcDiscountDeduction;
+            }
+
+            return new DiscountPrice { TotalDiscountDeduction = totalDiscountDeduction, TotalPriceAfterDiscount = totalPriceAfterDiscount };
+
+        }
+
+      
+        private decimal GetPriceAfterDiscountApplied(string discount, string applicableUPCForSpecialDiscount, string taxPercentage, decimal price, string applyDiscountFirst)
+        {
+            var discountAmount = GetDiscountDeduction(discount, price);
+            var priceAfterDiscountApplied = price - discountAmount;
+            return RoundToTwoDecimalPlaces(priceAfterDiscountApplied);
+        }
+
+        
+        private decimal GetPriceAfterTaxApplied(decimal price, string tax)
+        {
+            var taxAmount = GetTaxAddition(price, tax);
+            var priceWithtax = price + taxAmount;
+            return RoundToTwoDecimalPlaces(priceWithtax);
+        }
+
+        private decimal GetTaxAddition(decimal price, string tax)
+        {
+            var taxPercentage = RoundToTwoDecimalPlaces(decimal.Parse(tax));
+            return RoundToTwoDecimalPlaces(price * GetMultiplier(taxPercentage));
+        }
+
+        private decimal GetDiscountDeduction(string discount, decimal price)
+        {
+            var discountPercentage = RoundToTwoDecimalPlaces(decimal.Parse(discount));
+            return RoundToTwoDecimalPlaces(price * GetMultiplier(discountPercentage));
+        }
+
+        private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount)
+        {
+            var result =  product.UPC == int.Parse(applicableUPCForSpecialDiscount) ? product.Price * 0.07M : 0;
+            return RoundToTwoDecimalPlaces(result);
+        }
+
+        private decimal RoundToTwoDecimalPlaces(decimal number)
+        {
+            return Math.Round(number, 2);
+        }
+
+        private decimal GetMultiplier(decimal d)
+        {
+            return d / 100;
         }
 
         private string GetApplicableUPCForSpecialDiscount()
@@ -54,7 +129,7 @@ namespace Price_Calculator_Kata
         private string GetTaxPercentage()
         {
             Console.WriteLine(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
-            return  Console.ReadLine();
+            return Console.ReadLine();
         }
 
         private string GetDiscountPercentage()
@@ -63,33 +138,10 @@ namespace Price_Calculator_Kata
             return Console.ReadLine();
         }
 
-        private DiscountPrice GetPriceWithDiscount(string discount, string applicableUPCForSpecialDiscount, string taxPercentage, Product product)
+        private string GetApplyDiscountFirstFlag()
         {
-            var taxAmount = Math.Round(GetPriceWithTax(product, taxPercentage) - product.Price, 2);
-            var discountPercentage = Math.Round(decimal.Parse(discount), 2);
-            var discountAmount = Math.Round((discountPercentage / 100) * product.Price, 2);
-
-            if(product.UPC == int.Parse(applicableUPCForSpecialDiscount))
-            {
-                discountAmount += product.Price * 0.07M;
-            }
-
-            return new DiscountPrice
-            {
-                DiscountPercentage = discountPercentage,
-                TaxAmount = taxAmount,
-                DiscountAmount = discountAmount,
-                PriceBeforeDiscount = product.Price,
-                PriceAfterDiscount = product.Price + (taxAmount - discountAmount)
-            };
-        }
-
-        private decimal GetPriceWithTax(Product product, string taxPercentage)
-        {
-            var preTaxPrice = product.Price;
-            var multipier = Math.Round(decimal.Parse(taxPercentage), 2) / 100;
-            var priceWithtax = preTaxPrice + (preTaxPrice * multipier);
-            return Math.Round(priceWithtax, 2);
+            Console.WriteLine(_priceCalculatorStringBuilder.ApplyDiscountFirstPrompt());
+            return Console.ReadLine();
         }
 
     }
