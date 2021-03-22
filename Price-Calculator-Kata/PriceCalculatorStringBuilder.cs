@@ -16,9 +16,9 @@ namespace Price_Calculator_Kata
             return $"Product price reported as ${preTaxPrice} before tax and ${postTaxPrice} after {taxPercentage}% tax";
         }
 
-        public string GetDiscountPriceText(DiscountPrice discountPrice)
+        public string GetDiscountPriceText(decimal discount, decimal totalPriceAfterDiscount)
         {
-            return $"Discount amount = ${discountPrice.DiscountAmount},{Environment.NewLine}Price = ${discountPrice.PriceAfterDiscount}";
+            return $"Discount amount = ${discount},{Environment.NewLine}Price = ${totalPriceAfterDiscount}";
         }
 
         public string GetDiscountPriceEntryPrompt()
@@ -35,6 +35,11 @@ namespace Price_Calculator_Kata
         public string GetApplicableUPCDiscountEntryPrompt()
         {
             return $"Enter applicable UPC for special discount";
+        }
+
+        public string ApplyDiscountFirstPrompt()
+        {
+            return $"Apply discoun first. Y for Yes, N for No";
         }
     }
 }
