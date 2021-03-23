@@ -19,9 +19,8 @@ namespace Price_Calculator_Kata
         public void Init()
         {
             var product = _productDetailsManager.GetProduct();
-            var productDetailsText = _priceCalculatorStringBuilder.ProductDetailsIntro(product);
-            Console.WriteLine(productDetailsText);
-            var selectedOption = Console.ReadLine();
+            var productDetailsText = _priceCalculatorStringBuilder.ProductDetailsIntro(product);          
+            var selectedOption = GetAnswer(productDetailsText);
             PrintCalculationMessage(selectedOption, product);
         }
 
@@ -31,8 +30,9 @@ namespace Price_Calculator_Kata
             if (option == "1")
             {
                 var taxPercentage = GetTaxPercentage();
+                var taxAddition = GetTaxAddition(product.Price, taxPercentage);
                 var priceWithTax = GetPriceAfterTaxApplied(product.Price, taxPercentage);
-                Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(product.Price, priceWithTax, taxPercentage));
+                Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(product.Price, priceWithTax, taxAddition, taxPercentage));
             }
 
             else if (option == "2")
@@ -41,18 +41,40 @@ namespace Price_Calculator_Kata
                 var taxPercentage = GetTaxPercentage();
                 var discountPercentage = GetDiscountPercentage();
                 var applyDiscountFirst = GetApplyDiscountFirstFlag();
+                var priceDetails = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage);
+                var applyTransportCost = GetAnswerForApplyTransportCost();
+                priceDetails.TransportCost = GetAdditionalExpenses(applyTransportCost, product);
+                var applyPackagingCost = GetAnswerForApplyPackagingCost();
+                priceDetails.PackagingCost = GetAdditionalExpenses(applyPackagingCost, product);
+                priceDetails.TotalPriceAfterDiscountAndTaxation += (priceDetails.PackagingCost + priceDetails.TransportCost);
 
-                var discountPrice = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage);
-
-                Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(discountPrice.TotalDiscountDeduction, discountPrice.TotalPriceAfterDiscount));
+                Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(priceDetails));
             }
         }
 
-        private DiscountPrice ApplyDiscountsAndTax(string applyDiscountFirst, Product product, string applicableUPCForSpecialDiscount, string taxPercentage, string discountPercentage)
+        private decimal GetAdditionalExpenses(string additionalExpenses, Product product)
+        {
+            if (additionalExpenses == "Y")
+            {
+                var answer = GetApplyPercentage();
+                if (answer == "Y")
+                {
+                    return product.Price * GetMultiplier(1);
+                }
+                else
+                {
+                    return 2.2M;
+                }
+            }
+
+            return 0M;
+        }
+
+        private PriceDetails ApplyDiscountsAndTax(string applyDiscountFirst, Product product, string applicableUPCForSpecialDiscount, string taxPercentage, string discountPercentage)
         {
             var upcDiscountDeduction = GetUPCDiscountDeduction(product, applicableUPCForSpecialDiscount);
             decimal totalDiscountDeduction;
-            decimal totalPriceAfterDiscount;
+            decimal totalPriceAfterDiscountAndTaxation;
             decimal taxAddition;
             decimal discountDeduction;
 
@@ -62,85 +84,94 @@ namespace Price_Calculator_Kata
                 taxAddition = GetTaxAddition(priceAfterUPCDiscount, taxPercentage);
                 discountDeduction = GetDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
                 totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
-                totalPriceAfterDiscount = priceAfterUPCDiscount + taxAddition - discountDeduction;
+                totalPriceAfterDiscountAndTaxation = priceAfterUPCDiscount + taxAddition - discountDeduction;
             }
             else
             {
                 taxAddition = GetTaxAddition(product.Price, taxPercentage);
                 discountDeduction = GetDiscountDeduction(discountPercentage, product.Price);               
                 totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
-                totalPriceAfterDiscount = product.Price + taxAddition - discountDeduction - upcDiscountDeduction;
+                totalPriceAfterDiscountAndTaxation = product.Price + taxAddition - discountDeduction - upcDiscountDeduction;
             }
 
-            return new DiscountPrice { TotalDiscountDeduction = totalDiscountDeduction, TotalPriceAfterDiscount = totalPriceAfterDiscount };
+            return new PriceDetails {
+                TotalDiscountDeduction = totalDiscountDeduction,
+                TotalPriceAfterDiscountAndTaxation = totalPriceAfterDiscountAndTaxation,
+                TaxAddition = taxAddition,
+                InitialPrice = product.Price
+            };
 
         }
-
-      
-        private decimal GetPriceAfterDiscountApplied(string discount, string applicableUPCForSpecialDiscount, string taxPercentage, decimal price, string applyDiscountFirst)
-        {
-            var discountAmount = GetDiscountDeduction(discount, price);
-            var priceAfterDiscountApplied = price - discountAmount;
-            return RoundToTwoDecimalPlaces(priceAfterDiscountApplied);
-        }
-
-        
+     
         private decimal GetPriceAfterTaxApplied(decimal price, string tax)
         {
             var taxAmount = GetTaxAddition(price, tax);
             var priceWithtax = price + taxAmount;
-            return RoundToTwoDecimalPlaces(priceWithtax);
+            return priceWithtax;
         }
 
         private decimal GetTaxAddition(decimal price, string tax)
         {
-            var taxPercentage = RoundToTwoDecimalPlaces(decimal.Parse(tax));
-            return RoundToTwoDecimalPlaces(price * GetMultiplier(taxPercentage));
+            var taxPercentage = decimal.Parse(tax);
+            return price * GetMultiplier(taxPercentage);
         }
 
         private decimal GetDiscountDeduction(string discount, decimal price)
         {
-            var discountPercentage = RoundToTwoDecimalPlaces(decimal.Parse(discount));
-            return RoundToTwoDecimalPlaces(price * GetMultiplier(discountPercentage));
+            var discountPercentage = decimal.Parse(discount);
+            return price * GetMultiplier(discountPercentage);
         }
 
         private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount)
         {
             var result =  product.UPC == int.Parse(applicableUPCForSpecialDiscount) ? product.Price * 0.07M : 0;
-            return RoundToTwoDecimalPlaces(result);
+            return result;
         }
 
-        private decimal RoundToTwoDecimalPlaces(decimal number)
-        {
-            return Math.Round(number, 2);
-        }
+     
 
         private decimal GetMultiplier(decimal d)
         {
             return d / 100;
         }
 
+        private string GetAnswerForApplyPackagingCost()
+        {
+            return GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyPackagingCostPrompt());
+        }
+
+        private string GetAnswerForApplyTransportCost()
+        {
+            return GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyTransportCostPrompt());
+        }
         private string GetApplicableUPCForSpecialDiscount()
         {
-            Console.WriteLine(_priceCalculatorStringBuilder.GetApplicableUPCDiscountEntryPrompt());
-            return Console.ReadLine();
+            return GetAnswer(_priceCalculatorStringBuilder.GetApplicableUPCDiscountEntryPrompt());
         }
 
         private string GetTaxPercentage()
         {
-            Console.WriteLine(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
-            return Console.ReadLine();
+            return GetAnswer(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
         }
 
         private string GetDiscountPercentage()
         {
-            Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt());
-            return Console.ReadLine();
+            return GetAnswer(_priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt());
         }
 
         private string GetApplyDiscountFirstFlag()
         {
-            Console.WriteLine(_priceCalculatorStringBuilder.ApplyDiscountFirstPrompt());
+            return GetAnswer(_priceCalculatorStringBuilder.ApplyDiscountFirstPrompt());
+        }
+
+        private string GetApplyPercentage()
+        {
+            return GetAnswer("apply percentage? Y/N");
+        }
+
+        private string GetAnswer(string prompt)
+        {
+            Console.WriteLine(prompt);
             return Console.ReadLine();
         }
 
