@@ -78,22 +78,22 @@ namespace Price_Calculator_Kata
             decimal totalDiscountDeduction;
             decimal totalPriceAfterDiscountAndTaxation;
             decimal taxAddition;
-            decimal discountDeduction;
+            decimal universalDiscountDeduction;
 
             if (applyDiscountFirst == "Y")
             {               
                 var priceAfterUPCDiscount = product.Price - upcDiscountDeduction;
                 taxAddition = GetTaxAddition(priceAfterUPCDiscount, taxPercentage);
-                discountDeduction = GetDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
-                totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
-                totalPriceAfterDiscountAndTaxation = priceAfterUPCDiscount + taxAddition - discountDeduction;
+                universalDiscountDeduction = GetDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
+                totalDiscountDeduction = GetTotalDiscountDeduction(universalDiscountDeduction, upcDiscountDeduction, product.Price);
+                totalPriceAfterDiscountAndTaxation = priceAfterUPCDiscount + taxAddition - totalDiscountDeduction;
             }
             else
             {
                 taxAddition = GetTaxAddition(product.Price, taxPercentage);
-                discountDeduction = GetDiscountDeduction(discountPercentage, product.Price);               
-                totalDiscountDeduction = discountDeduction + upcDiscountDeduction;
-                totalPriceAfterDiscountAndTaxation = product.Price + taxAddition - discountDeduction - upcDiscountDeduction;
+                universalDiscountDeduction = GetDiscountDeduction(discountPercentage, product.Price);
+                totalDiscountDeduction = GetTotalDiscountDeduction(universalDiscountDeduction, upcDiscountDeduction, product.Price);
+                totalPriceAfterDiscountAndTaxation = product.Price + taxAddition - totalDiscountDeduction;
             }
 
             return new PriceDetails {
@@ -102,7 +102,26 @@ namespace Price_Calculator_Kata
                 TaxAddition = taxAddition,
                 InitialPrice = product.Price
             };
+        }
 
+
+        private decimal GetTotalDiscountDeduction(decimal universalDiscountDeduction, decimal upcDiscountDeduction, decimal cost)
+        {
+            var methodOfCalculation = GetMethodOfCalculationForCap();
+            decimal cap = 0;
+            var totalDiscountDeduction = universalDiscountDeduction + upcDiscountDeduction;
+
+            if (methodOfCalculation == "P")
+            {
+                cap = cost * 0.2M;
+            }
+
+            else if(methodOfCalculation == "F")
+            {
+                cap = 4M;             
+            }
+
+            return cap < totalDiscountDeduction ? cap : totalDiscountDeduction;
         }
 
         private decimal GetPriceAfterDiscountApplied(string discount, decimal price)
@@ -188,6 +207,11 @@ namespace Price_Calculator_Kata
         private string GetApplyPercentage()
         {
             return GetAnswer(_priceCalculatorStringBuilder.ApplyPercentagePrompt());
+        }
+
+        private string GetMethodOfCalculationForCap()
+        {
+            return GetAnswer(_priceCalculatorStringBuilder.MethodOfCalculationForCapPrompt());
         }
 
         private string GetAnswer(string prompt)

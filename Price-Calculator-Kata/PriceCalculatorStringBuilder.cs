@@ -86,6 +86,11 @@ namespace Price_Calculator_Kata
             return $"apply percentage? Y/N";
         }
 
+        public string MethodOfCalculationForCapPrompt()
+        {
+            return $"Method of calculating the cap: P for percentage. F for fixed amount";
+        }
+
         private decimal RoundToTwoDecimalPlaces(decimal number)
         {
             return Math.Round(number, 2);
