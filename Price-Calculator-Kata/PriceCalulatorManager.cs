@@ -41,7 +41,8 @@ namespace Price_Calculator_Kata
                 var taxPercentage = GetTaxPercentage();
                 var discountPercentage = GetDiscountPercentage();
                 var applyDiscountFirst = GetApplyDiscountFirstFlag();
-                var priceDetails = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage);
+                var methodOfCombinedDiscount = GetMethodOfCombinedDiscount();
+                var priceDetails = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage, methodOfCombinedDiscount);
                 var applyTransportCost = GetAnswerForApplyTransportCost();
                 priceDetails.TransportCost = GetAdditionalExpenses(applyTransportCost, product);
                 var applyPackagingCost = GetAnswerForApplyPackagingCost();
@@ -70,9 +71,10 @@ namespace Price_Calculator_Kata
             return 0M;
         }
 
-        private PriceDetails ApplyDiscountsAndTax(string applyDiscountFirst, Product product, string applicableUPCForSpecialDiscount, string taxPercentage, string discountPercentage)
+        private PriceDetails ApplyDiscountsAndTax(string applyDiscountFirst, Product product, string applicableUPCForSpecialDiscount, string taxPercentage,
+            string discountPercentage, string methodOfCombinedDiscount)
         {
-            var upcDiscountDeduction = GetUPCDiscountDeduction(product, applicableUPCForSpecialDiscount);
+            var upcDiscountDeduction = GetUPCDiscountDeduction(product, applicableUPCForSpecialDiscount, methodOfCombinedDiscount, discountPercentage);
             decimal totalDiscountDeduction;
             decimal totalPriceAfterDiscountAndTaxation;
             decimal taxAddition;
@@ -102,7 +104,14 @@ namespace Price_Calculator_Kata
             };
 
         }
-     
+
+        private decimal GetPriceAfterDiscountApplied(string discount, decimal price)
+        {
+            var discountAmount = GetDiscountDeduction(discount, price);
+            var priceAfterDiscountApplied = price - discountAmount;
+            return priceAfterDiscountApplied;
+        }
+
         private decimal GetPriceAfterTaxApplied(decimal price, string tax)
         {
             var taxAmount = GetTaxAddition(price, tax);
@@ -122,17 +131,29 @@ namespace Price_Calculator_Kata
             return price * GetMultiplier(discountPercentage);
         }
 
-        private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount)
+        private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount, string methodOfCombinedDiscount, string discountPercentage)
         {
-            var result =  product.UPC == int.Parse(applicableUPCForSpecialDiscount) ? product.Price * 0.07M : 0;
-            return result;
-        }
+            var applicableUpc = int.Parse(applicableUPCForSpecialDiscount);
+            var upcDiscountMultiplier = 0.07M;
+            var initialPrice = product.Price;
 
-     
+            if (methodOfCombinedDiscount == "M" && product.UPC == applicableUpc)
+            {
+                return GetPriceAfterDiscountApplied(discountPercentage, initialPrice) * upcDiscountMultiplier;
+            }
+
+            return product.UPC == applicableUpc ? initialPrice * upcDiscountMultiplier : 0;
+
+        }
 
         private decimal GetMultiplier(decimal d)
         {
             return d / 100;
+        }
+
+        private string GetMethodOfCombinedDiscount()
+        {
+            return GetAnswer(_priceCalculatorStringBuilder.MethodOfCombinedDiscountPrompt());
         }
 
         private string GetAnswerForApplyPackagingCost()
@@ -166,7 +187,7 @@ namespace Price_Calculator_Kata
 
         private string GetApplyPercentage()
         {
-            return GetAnswer("apply percentage? Y/N");
+            return GetAnswer(_priceCalculatorStringBuilder.ApplyPercentagePrompt());
         }
 
         private string GetAnswer(string prompt)

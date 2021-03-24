@@ -76,6 +76,16 @@ namespace Price_Calculator_Kata
             return $"Apply UPC discount first? Y for Yes, N for No";
         }
 
+        public string MethodOfCombinedDiscountPrompt()
+        {
+            return $"Additive or multiplicative? A for Additive, M for multiplicative";
+        }
+
+        public string ApplyPercentagePrompt()
+        {
+            return $"apply percentage? Y/N";
+        }
+
         private decimal RoundToTwoDecimalPlaces(decimal number)
         {
             return Math.Round(number, 2);
