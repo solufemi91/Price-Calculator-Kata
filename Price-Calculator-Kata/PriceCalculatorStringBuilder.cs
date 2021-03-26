@@ -7,9 +7,13 @@ namespace Price_Calculator_Kata
 {
     public class PriceCalculatorStringBuilder
     {
-        public string ProductDetailsIntro(Product product)
+        public string TaxOrDisount(Product product)
         {
-            return $"These are the product details: Sample product: Book with name = {product.Name}, UPC={product.UPC}, price=${product.Price}.{Environment.NewLine}Enter option: {Environment.NewLine}1. Get tax  {Environment.NewLine}2. Get discount";
+            return $"These are the product details: Sample product: Book with name = {product.Name}, UPC={product.UPC}, " +
+                $"price=${product.Price}." +
+                $"{Environment.NewLine}Enter option: " +
+                $"{Environment.NewLine}1. Get tax  " +
+                $"{Environment.NewLine}2. Get discount";
         }
         public string GetTaxText(decimal preTaxPrice, decimal postTaxPrice, decimal taxAddition, string taxPercentage)
         {
