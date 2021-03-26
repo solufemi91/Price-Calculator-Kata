@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Price_Calculator_Kata
 {
-    public class ProductDetailsManager
+    public class ProductDetailsManager : IProductDetailsManager
     {
         public Product GetProduct()
         {

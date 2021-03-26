@@ -1,21 +1,24 @@
-﻿using Price_Calculator_Kata.Models;
+﻿using Microsoft.Extensions.Configuration;
+using Price_Calculator_Kata.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Price_Calculator_Kata
 {
-    public class PriceCalulatorManager
+    public class PriceCalulatorManager : IPriceCalulatorManager
     {
-        private readonly ProductDetailsManager _productDetailsManager;
-        private readonly PriceCalculatorStringBuilder _priceCalculatorStringBuilder;
+        private readonly IProductDetailsManager _productDetailsManager;
+        private readonly IPriceCalculatorStringBuilder _priceCalculatorStringBuilder;
+        private readonly IConfigurationWrapper _config;
         private readonly Product _product;
 
-        public PriceCalulatorManager()
+        public PriceCalulatorManager(IProductDetailsManager productDetailsManager, IPriceCalculatorStringBuilder priceCalculatorStringBuilder, IConfigurationWrapper config)
         {
-            _priceCalculatorStringBuilder = new PriceCalculatorStringBuilder();
-            _productDetailsManager = new ProductDetailsManager();
+            _priceCalculatorStringBuilder = priceCalculatorStringBuilder;
+            _productDetailsManager = productDetailsManager;
             _product = _productDetailsManager.GetProduct();
+            _config = config;
         }
 
         public void Init()
@@ -61,11 +64,11 @@ namespace Price_Calculator_Kata
                 var answer = GetApplyPercentage();
                 if (answer == "Y")
                 {
-                    return product.Price * GetMultiplier(1);
+                    return product.Price * GetMultiplier(_config.AdditionalExpensesPercentage);
                 }
                 else
                 {
-                    return 2.2M;
+                    return _config.AdditionalExpensesFixedAmount;
                 }
             }
             else if (additionalExpenses == "N")
@@ -118,12 +121,12 @@ namespace Price_Calculator_Kata
 
             if (methodOfCalculation == "P")
             {
-                cap = cost * 0.2M;
+                cap = cost * GetMultiplier(_config.DiscountCapPercentage);
             }
 
             else if(methodOfCalculation == "F")
             {
-                cap = 4M;             
+                cap = _config.DiscountCapFixedAmount;             
             }
 
             return cap < totalDiscountDeduction ? cap : totalDiscountDeduction;
@@ -158,7 +161,7 @@ namespace Price_Calculator_Kata
         private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount, string methodOfCombinedDiscount, string discountPercentage)
         {
             var applicableUpc = int.Parse(applicableUPCForSpecialDiscount);
-            var upcDiscountMultiplier = 0.07M;
+            var upcDiscountMultiplier = GetMultiplier(_config.UpcDiscount);
             var initialPrice = product.Price;
 
             if (methodOfCombinedDiscount == "M" && product.UPC == applicableUpc)
