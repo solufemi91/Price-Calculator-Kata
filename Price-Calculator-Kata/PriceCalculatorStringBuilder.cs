@@ -5,11 +5,20 @@ using System.Text;
 
 namespace Price_Calculator_Kata
 {
-    public class PriceCalculatorStringBuilder
+    public class PriceCalculatorStringBuilder : IPriceCalculatorStringBuilder
     {
-        public string ProductDetailsIntro(Product product)
+        private string _currency;
+        public PriceCalculatorStringBuilder(IConfigurationWrapper configurationWrapper)
         {
-            return $"These are the product details: Sample product: Book with name = {product.Name}, UPC={product.UPC}, price=${product.Price}.{Environment.NewLine}Enter option: {Environment.NewLine}1. Get tax  {Environment.NewLine}2. Get discount";
+            _currency = configurationWrapper.Currency;
+        }
+        public string TaxOrDisount(Product product)
+        {
+            return $"These are the product details: Sample product: Book with name = {product.Name}, UPC={product.UPC}, " +
+                $"price={product.Price} {_currency}." +
+                $"{Environment.NewLine}Enter option: " +
+                $"{Environment.NewLine}1. Get tax  " +
+                $"{Environment.NewLine}2. Get discount";
         }
         public string GetTaxText(decimal preTaxPrice, decimal postTaxPrice, decimal taxAddition, string taxPercentage)
         {
@@ -17,10 +26,10 @@ namespace Price_Calculator_Kata
             var tax = BuildReportCategory(taxAddition, "Tax");
             var total = BuildReportCategory(postTaxPrice, "Total");
 
-            return $"Product price reported as ${RoundToTwoDecimalPlaces(preTaxPrice)} before tax and ${RoundToTwoDecimalPlaces(postTaxPrice)} after {taxPercentage}% tax" +
-             $"{cost}" +
-             $"{tax}" +
-             $"{total}";
+            return $"Product price reported as {RoundToTwoDecimalPlaces(preTaxPrice)} {_currency} before tax and {RoundToTwoDecimalPlaces(postTaxPrice)} {_currency} after {taxPercentage}% tax" +
+             $"{cost} {_currency}" +
+             $"{tax} {_currency}" +
+             $"{total} {_currency}";
         }
 
         public string GetDiscountPriceText(PriceDetails priceDetails)
@@ -32,12 +41,12 @@ namespace Price_Calculator_Kata
             var transport = BuildReportCategory(priceDetails.TransportCost, "Transport"); 
             var total = BuildReportCategory(priceDetails.TotalPriceAfterDiscountAndTaxation, "Total"); 
 
-            return $"{cost}" +
-                $"{tax}" +
-                $"{discounts}" +
-                $"{packaging}" +
-                $"{transport}" +
-                $"{total}";
+            return $"{cost} {_currency}" +
+                $"{tax} {_currency}" +
+                $"{discounts} {_currency}" +
+                $"{packaging} {_currency}" +
+                $"{transport} {_currency}" +
+                $"{total} {_currency}";
         }
 
         private string BuildReportCategory(decimal cost, string category)

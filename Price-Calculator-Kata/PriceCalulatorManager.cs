@@ -1,38 +1,42 @@
-﻿using Price_Calculator_Kata.Models;
+﻿using Microsoft.Extensions.Configuration;
+using Price_Calculator_Kata.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Price_Calculator_Kata
 {
-    public class PriceCalulatorManager
+    public class PriceCalulatorManager : IPriceCalulatorManager
     {
-        private readonly ProductDetailsManager _productDetailsManager;
-        private readonly PriceCalculatorStringBuilder _priceCalculatorStringBuilder;
+        private readonly IProductDetailsManager _productDetailsManager;
+        private readonly IPriceCalculatorStringBuilder _priceCalculatorStringBuilder;
+        private readonly IConfigurationWrapper _config;
+        private readonly Product _product;
 
-        public PriceCalulatorManager()
+        public PriceCalulatorManager(IProductDetailsManager productDetailsManager, IPriceCalculatorStringBuilder priceCalculatorStringBuilder, IConfigurationWrapper config)
         {
-            _priceCalculatorStringBuilder = new PriceCalculatorStringBuilder();
-            _productDetailsManager = new ProductDetailsManager();
+            _priceCalculatorStringBuilder = priceCalculatorStringBuilder;
+            _productDetailsManager = productDetailsManager;
+            _product = _productDetailsManager.GetProduct();
+            _config = config;
         }
 
         public void Init()
         {
-            var product = _productDetailsManager.GetProduct();
-            var productDetailsText = _priceCalculatorStringBuilder.ProductDetailsIntro(product);          
-            var selectedOption = GetAnswer(productDetailsText);
-            PrintCalculationMessage(selectedOption, product);
+            var taxOrDiscount = _priceCalculatorStringBuilder.TaxOrDisount(_product);          
+            var selectedOption = GetAnswer(taxOrDiscount);
+            PrintCalculationMessage(selectedOption);
         }
 
-        private void PrintCalculationMessage(string option, Product product)
+        private void PrintCalculationMessage(string option)
         {
 
             if (option == "1")
             {
                 var taxPercentage = GetTaxPercentage();
-                var taxAddition = GetTaxAddition(product.Price, taxPercentage);
-                var priceWithTax = GetPriceAfterTaxApplied(product.Price, taxPercentage);
-                Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(product.Price, priceWithTax, taxAddition, taxPercentage));
+                var taxAddition = GetTaxAddition(_product.Price, taxPercentage);
+                var priceWithTax = GetPriceAfterTaxApplied(_product.Price, taxPercentage);
+                Console.WriteLine(_priceCalculatorStringBuilder.GetTaxText(_product.Price, priceWithTax, taxAddition, taxPercentage));
             }
 
             else if (option == "2")
@@ -42,11 +46,11 @@ namespace Price_Calculator_Kata
                 var discountPercentage = GetDiscountPercentage();
                 var applyDiscountFirst = GetApplyDiscountFirstFlag();
                 var methodOfCombinedDiscount = GetMethodOfCombinedDiscount();
-                var priceDetails = ApplyDiscountsAndTax(applyDiscountFirst, product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage, methodOfCombinedDiscount);
+                var priceDetails = ApplyDiscountsAndTax(applyDiscountFirst, _product, applicableUPCForSpecialDiscount, taxPercentage, discountPercentage, methodOfCombinedDiscount);
                 var applyTransportCost = GetAnswerForApplyTransportCost();
-                priceDetails.TransportCost = GetAdditionalExpenses(applyTransportCost, product);
-                var applyPackagingCost = GetAnswerForApplyPackagingCost();
-                priceDetails.PackagingCost = GetAdditionalExpenses(applyPackagingCost, product);
+                priceDetails.TransportCost = GetAdditionalExpenses(applyTransportCost, _product);
+                var applyPackagingCost = GetMethodForApplyPackagingCost();
+                priceDetails.PackagingCost = GetAdditionalExpenses(applyPackagingCost, _product);
                 priceDetails.TotalPriceAfterDiscountAndTaxation += (priceDetails.PackagingCost + priceDetails.TransportCost);
 
                 Console.WriteLine(_priceCalculatorStringBuilder.GetDiscountPriceText(priceDetails));
@@ -60,14 +64,18 @@ namespace Price_Calculator_Kata
                 var answer = GetApplyPercentage();
                 if (answer == "Y")
                 {
-                    return product.Price * GetMultiplier(1);
+                    return product.Price * GetMultiplier(_config.AdditionalExpensesPercentage);
                 }
                 else
                 {
-                    return 2.2M;
+                    return _config.AdditionalExpensesFixedAmount;
                 }
             }
-
+            else if (additionalExpenses == "N")
+            {
+                return 0M;
+            }          
+            
             return 0M;
         }
 
@@ -84,14 +92,14 @@ namespace Price_Calculator_Kata
             {               
                 var priceAfterUPCDiscount = product.Price - upcDiscountDeduction;
                 taxAddition = GetTaxAddition(priceAfterUPCDiscount, taxPercentage);
-                universalDiscountDeduction = GetDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
+                universalDiscountDeduction = GetUniversalDiscountDeduction(discountPercentage, priceAfterUPCDiscount);
                 totalDiscountDeduction = GetTotalDiscountDeduction(universalDiscountDeduction, upcDiscountDeduction, product.Price);
                 totalPriceAfterDiscountAndTaxation = priceAfterUPCDiscount + taxAddition - totalDiscountDeduction;
             }
             else
             {
                 taxAddition = GetTaxAddition(product.Price, taxPercentage);
-                universalDiscountDeduction = GetDiscountDeduction(discountPercentage, product.Price);
+                universalDiscountDeduction = GetUniversalDiscountDeduction(discountPercentage, product.Price);
                 totalDiscountDeduction = GetTotalDiscountDeduction(universalDiscountDeduction, upcDiscountDeduction, product.Price);
                 totalPriceAfterDiscountAndTaxation = product.Price + taxAddition - totalDiscountDeduction;
             }
@@ -113,12 +121,12 @@ namespace Price_Calculator_Kata
 
             if (methodOfCalculation == "P")
             {
-                cap = cost * 0.2M;
+                cap = cost * GetMultiplier(_config.DiscountCapPercentage);
             }
 
             else if(methodOfCalculation == "F")
             {
-                cap = 4M;             
+                cap = _config.DiscountCapFixedAmount;             
             }
 
             return cap < totalDiscountDeduction ? cap : totalDiscountDeduction;
@@ -126,7 +134,7 @@ namespace Price_Calculator_Kata
 
         private decimal GetPriceAfterDiscountApplied(string discount, decimal price)
         {
-            var discountAmount = GetDiscountDeduction(discount, price);
+            var discountAmount = GetUniversalDiscountDeduction(discount, price);
             var priceAfterDiscountApplied = price - discountAmount;
             return priceAfterDiscountApplied;
         }
@@ -144,7 +152,7 @@ namespace Price_Calculator_Kata
             return price * GetMultiplier(taxPercentage);
         }
 
-        private decimal GetDiscountDeduction(string discount, decimal price)
+        private decimal GetUniversalDiscountDeduction(string discount, decimal price)
         {
             var discountPercentage = decimal.Parse(discount);
             return price * GetMultiplier(discountPercentage);
@@ -153,7 +161,7 @@ namespace Price_Calculator_Kata
         private decimal GetUPCDiscountDeduction(Product product, string applicableUPCForSpecialDiscount, string methodOfCombinedDiscount, string discountPercentage)
         {
             var applicableUpc = int.Parse(applicableUPCForSpecialDiscount);
-            var upcDiscountMultiplier = 0.07M;
+            var upcDiscountMultiplier = GetMultiplier(_config.UpcDiscount);
             var initialPrice = product.Price;
 
             if (methodOfCombinedDiscount == "M" && product.UPC == applicableUpc)
@@ -175,7 +183,7 @@ namespace Price_Calculator_Kata
             return GetAnswer(_priceCalculatorStringBuilder.MethodOfCombinedDiscountPrompt());
         }
 
-        private string GetAnswerForApplyPackagingCost()
+        private string GetMethodForApplyPackagingCost()
         {
             return GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyPackagingCostPrompt());
         }
