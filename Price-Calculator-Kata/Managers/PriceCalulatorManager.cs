@@ -11,12 +11,14 @@ namespace Price_Calculator_Kata
         private readonly IProductDetailsManager _productDetailsManager;
         private readonly IPriceCalculatorStringBuilder _priceCalculatorStringBuilder;
         private readonly IConfigurationWrapper _config;
+        private readonly IConsoleWrapper _consoleWrapper;
         private readonly Product _product;
 
-        public PriceCalulatorManager(IProductDetailsManager productDetailsManager, IPriceCalculatorStringBuilder priceCalculatorStringBuilder, IConfigurationWrapper config)
+        public PriceCalulatorManager(IProductDetailsManager productDetailsManager, IPriceCalculatorStringBuilder priceCalculatorStringBuilder, IConfigurationWrapper config, IConsoleWrapper consoleWrapper)
         {
             _priceCalculatorStringBuilder = priceCalculatorStringBuilder;
             _productDetailsManager = productDetailsManager;
+            _consoleWrapper = consoleWrapper;
             _product = _productDetailsManager.GetProduct();
             _config = config;
         }
@@ -24,7 +26,7 @@ namespace Price_Calculator_Kata
         public void Init()
         {
             var taxOrDiscount = _priceCalculatorStringBuilder.TaxOrDisount(_product);          
-            var selectedOption = GetAnswer(taxOrDiscount);
+            var selectedOption = _consoleWrapper.GetAnswer(taxOrDiscount);
             PrintCalculationMessage(selectedOption);
         }
 
@@ -57,7 +59,7 @@ namespace Price_Calculator_Kata
             }
         }
 
-        private decimal GetAdditionalExpenses(string additionalExpenses, Product product)
+        public decimal GetAdditionalExpenses(string additionalExpenses, Product product)
         {
             if (additionalExpenses == "Y")
             {
@@ -180,53 +182,48 @@ namespace Price_Calculator_Kata
 
         private string GetMethodOfCombinedDiscount()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.MethodOfCombinedDiscountPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.MethodOfCombinedDiscountPrompt());
         }
 
         private string GetMethodForApplyPackagingCost()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyPackagingCostPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyPackagingCostPrompt());
         }
 
         private string GetAnswerForApplyTransportCost()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyTransportCostPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.GetAnswerForApplyTransportCostPrompt());
         }
         private string GetApplicableUPCForSpecialDiscount()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.GetApplicableUPCDiscountEntryPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.GetApplicableUPCDiscountEntryPrompt());
         }
 
         private string GetTaxPercentage()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.GetTaxPercentageEntryPrompt());
         }
 
         private string GetDiscountPercentage()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.GetDiscountPriceEntryPrompt());
         }
 
         private string GetApplyDiscountFirstFlag()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.ApplyDiscountFirstPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.ApplyDiscountFirstPrompt());
         }
 
         private string GetApplyPercentage()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.ApplyPercentagePrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.ApplyPercentagePrompt());
         }
 
         private string GetMethodOfCalculationForCap()
         {
-            return GetAnswer(_priceCalculatorStringBuilder.MethodOfCalculationForCapPrompt());
+            return _consoleWrapper.GetAnswer(_priceCalculatorStringBuilder.MethodOfCalculationForCapPrompt());
         }
 
-        private string GetAnswer(string prompt)
-        {
-            Console.WriteLine(prompt);
-            return Console.ReadLine();
-        }
 
     }
 }

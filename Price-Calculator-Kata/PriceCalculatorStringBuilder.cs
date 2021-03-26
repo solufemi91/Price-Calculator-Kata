@@ -7,7 +7,7 @@ namespace Price_Calculator_Kata
 {
     public class PriceCalculatorStringBuilder : IPriceCalculatorStringBuilder
     {
-        private string _currency;
+        private readonly string _currency;
         public PriceCalculatorStringBuilder(IConfigurationWrapper configurationWrapper)
         {
             _currency = configurationWrapper.Currency;
