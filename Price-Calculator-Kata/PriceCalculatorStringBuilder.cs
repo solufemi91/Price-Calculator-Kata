@@ -7,7 +7,7 @@ namespace Price_Calculator_Kata
 {
     public class PriceCalculatorStringBuilder : IPriceCalculatorStringBuilder
     {
-        private string _currency;
+        private readonly string _currency;
         public PriceCalculatorStringBuilder(IConfigurationWrapper configurationWrapper)
         {
             _currency = configurationWrapper.Currency;
@@ -41,17 +41,17 @@ namespace Price_Calculator_Kata
             var transport = BuildReportCategory(priceDetails.TransportCost, "Transport"); 
             var total = BuildReportCategory(priceDetails.TotalPriceAfterDiscountAndTaxation, "Total"); 
 
-            return $"{cost} {_currency}" +
-                $"{tax} {_currency}" +
-                $"{discounts} {_currency}" +
-                $"{packaging} {_currency}" +
-                $"{transport} {_currency}" +
-                $"{total} {_currency}";
+            return $"{cost}" +
+                $"{tax}" +
+                $"{discounts}" +
+                $"{packaging} " +
+                $"{transport}" +
+                $"{total}";
         }
 
         private string BuildReportCategory(decimal cost, string category)
         {
-            return RoundToTwoDecimalPlaces(cost) != 0 ? $"{Environment.NewLine}{category} = ${RoundToTwoDecimalPlaces(cost)}" : string.Empty;
+            return RoundToTwoDecimalPlaces(cost) != 0 ? $"{Environment.NewLine}{category} = {RoundToTwoDecimalPlaces(cost)} {_currency}" : string.Empty;
         }
 
         public string GetDiscountPriceEntryPrompt()

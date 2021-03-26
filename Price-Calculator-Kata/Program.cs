@@ -28,6 +28,7 @@ namespace Price_Calculator_Kata
             services.AddTransient<IPriceCalculatorStringBuilder, PriceCalculatorStringBuilder>();
             services.AddTransient<IPriceCalulatorManager, PriceCalulatorManager>();
             services.AddTransient<IConfigurationWrapper, ConfigurationWrapper>();
+            services.AddTransient<IConsoleWrapper, ConsoleWrapper>();
 
             services.AddTransient<App>();
 
