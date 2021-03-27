@@ -27,9 +27,9 @@ namespace Price_Calculator_Kata
             var total = BuildReportCategory(postTaxPrice, "Total");
 
             return $"Product price reported as {RoundToTwoDecimalPlaces(preTaxPrice)} {_currency} before tax and {RoundToTwoDecimalPlaces(postTaxPrice)} {_currency} after {taxPercentage}% tax" +
-             $"{cost} {_currency}" +
-             $"{tax} {_currency}" +
-             $"{total} {_currency}";
+             $"{cost}" +
+             $"{tax}" +
+             $"{total}";
         }
 
         public string GetDiscountPriceText(PriceDetails priceDetails)
